@@ -1,0 +1,20 @@
+# fly.toml — Fly.io 部署設定
+# 部署前執行：fly launch（會自動建立 app）
+
+app = "crypto-scanner"
+primary_region = "nrt"   # Tokyo — 離 Binance 較近，延遲低
+
+[build]
+
+[env]
+  STATE_DIR = "/data"
+
+# 持久化 volume：儲存 state.json，避免重啟後失去去重記錄
+[[mounts]]
+  source = "scanner_data"
+  destination = "/data"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+state.json
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.venv
+venv
+tests/
+*.md
+.git
+.gitignore
+.dockerignore
+fly.toml

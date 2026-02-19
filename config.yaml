@@ -1,0 +1,75 @@
+exchange:
+  name: binance
+  base_url: "https://fapi.binance.com"
+  market_type: usdt_perpetual
+  min_volume_24h: 20_000_000
+  max_symbols: 200
+  min_listing_days: 7
+  max_concurrent_requests: 10
+  kline_limit: 100
+
+scan:
+  interval_minutes: 15
+  timeframes:
+    - "4h"
+    - "1h"
+
+strategies:
+  trend:
+    enabled: true
+    short_enabled: true
+    timeframe: "4h"
+    ema_fast: 20
+    ema_slow: 50
+    rsi_threshold: 50
+    volume_multiplier: 1.5
+    score_threshold: 6
+    weights:
+      ema_cross: 3
+      macd_cross: 2
+      rsi_above: 1
+      volume_surge: 2
+
+  divergence:
+    enabled: true
+    short_enabled: true
+    timeframe: "1h"
+    lookback: 20
+    rsi_oversold: 40
+    rsi_overbought: 60
+    swing_window: 5
+    score_threshold: 6
+    weights:
+      price_new_low: 2
+      rsi_divergence: 3
+      volume_decline: 1
+      oversold: 2
+
+  breakout:
+    enabled: true
+    short_enabled: true
+    timeframe: "1h"
+    consolidation_bars: 24
+    range_threshold_pct: 5.0
+    volume_multiplier: 2.0
+    score_threshold: 6
+    weights:
+      consolidation: 2
+      breakout: 3
+      volume_surge: 3
+      atr_expansion: 1
+
+btc_filter:
+  enabled: false
+  ema_fast: 20
+  ema_slow: 50
+  rsi_bearish: 40
+  max_funding_rate: 0.0005
+
+notification:
+  cooldown_hours: 4
+  strong_signal_threshold: 8
+
+logging:
+  level: INFO
+  heartbeat_interval_hours: 1
