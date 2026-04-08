@@ -24,12 +24,17 @@
 4. 點擊 **Deploy**
 
 ### 4. 新增 Volume（持久化儲存）
-1. 在 service 頁面選擇 **Settings**
-2. 滾到 **Volumes** 區塊
-3. 點擊 **New Volume**
+**在專案畫布上（不是 Settings 裡）：**
+1. 在專案空白處**按右鍵**
+2. 選擇 **New Volume** （或按 `Ctrl+K` 搜尋 "volume"）
+3. 選擇要連接的 service（你的 CryptoHelper）
 4. Mount Path 填入：`/app/data`
 5. 點擊 **Add**
-6. **重新部署**（會自動觸發）
+6. **會自動重新部署**
+
+**如果找不到 Volume 選項：**
+目前可以先不設定 Volume，Scanner 依然能正常運作！
+唯一差別：重啟時會忘記已發送過的通知（可能重複發送），但不影響交易訊號準確性。
 
 ---
 
