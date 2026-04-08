@@ -1,10 +1,30 @@
 {
-  "RIVERUSDT__趨勢啟動型(空)": {
-    "last_notified": "2026-04-08T15:18:47.902964+00:00",
-    "last_score": 6
-  },
   "WLFIUSDT__趨勢啟動型(空)": {
     "last_notified": "2026-04-08T15:18:47.904570+00:00",
     "last_score": 6
+  },
+  "POLUSDT__趨勢啟動型(空)": {
+    "last_notified": "2026-04-08T15:32:23.338852+00:00",
+    "last_score": 6
+  },
+  "SWARMSUSDT__背離反轉型(空)": {
+    "last_notified": "2026-04-08T15:32:23.339678+00:00",
+    "last_score": 9
+  },
+  "SWARMSUSDT__爆量突破型": {
+    "last_notified": "2026-04-08T15:32:23.340338+00:00",
+    "last_score": 6
+  },
+  "4USDT__爆量突破型(空)": {
+    "last_notified": "2026-04-08T15:32:23.341032+00:00",
+    "last_score": 6
+  },
+  "ENJUSDT__背離反轉型(空)": {
+    "last_notified": "2026-04-08T15:32:23.341789+00:00",
+    "last_score": 7
+  },
+  "ENJUSDT__爆量突破型": {
+    "last_notified": "2026-04-08T15:32:23.342561+00:00",
+    "last_score": 7
   }
 }
