@@ -143,10 +143,12 @@ class StateManager:
 
     def _save(self) -> None:
         try:
+            self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.write_text(
                 json.dumps(self._state, indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
-        except OSError as exc:
-            logger.error("Failed to save state file: %s", exc)
+        except (OSError, PermissionError) as exc:
+            logger.warning("無法儲存狀態檔案 %s: %s（將僅使用記憶體模式）", self._path, exc)
+            # 不拋出異常，讓程式繼續運行
 
