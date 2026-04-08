@@ -1,176 +1,143 @@
-# 🖥️ 本地部署指南（Windows 排程）
+# 🖥️ 本地部署指南（持續運行模式）
 
-## 優點
-- ✅ 完全免費
-- ✅ 不會被 Binance 封鎖
-- ✅ 使用自己的網路 IP
-- ✅ 資料儲存在本地（更安全）
+## 🚀 快速開始
+
+### 1. 確認環境
+- ✅ Python 3.10+ 已安裝
+- ✅ 依賴套件已安裝（`pip install -e .` 或已完成）
+- ✅ `config.yaml` 中的 Telegram 設定正確
+
+### 2. 啟動 Scanner
+```
+雙擊 start.bat
+```
+
+就這麼簡單！視窗會顯示即時 log，Scanner 開始每 15 分鐘自動掃描。
 
 ---
 
-## 📋 一次性設定（5 分鐘）
+## 📱 使用體驗
 
-### 1. 確認環境變數（已設定好）
-檢查 `config.yaml` 中的 Telegram 設定是否正確
-
-### 2. 測試執行
-```powershell
-cd D:\CryptoHelper
-python -m src.main --single-run
+### 啟動時
 ```
-應該會掃描並在有訊號時發送 Telegram 通知
+═══════════════════════════════════════
+  🚀 CryptoHelper 加密貨幣掃描器
+═══════════════════════════════════════
 
-### 3. 設定 Windows 工作排程器
+✅ Scanner 正在啟動...
+📊 每 15 分鐘自動掃描幣安期貨
+💬 有訊號時自動發送 Telegram 通知
 
-#### 方法 A：使用圖形介面（推薦）
+⚠️  關閉此視窗將停止掃描
+═══════════════════════════════════════
 
-1. **開啟工作排程器**
-   - 按 `Win + R`
-   - 輸入 `taskschd.msc`
-   - 按 Enter
-
-2. **建立新工作**
-   - 右側點擊「建立工作」（不是「建立基本工作」）
-   
-3. **一般設定**
-   - 名稱：`CryptoHelper Scanner`
-   - 描述：`每15分鐘掃描加密貨幣交易訊號`
-   - ☑️ 勾選「使用最高權限執行」
-   - 設定：Windows 10
-
-4. **觸發程序**
-   - 點擊「新增」
-   - 開始工作：「依照排程」
-   - 設定：每天
-   - 重複工作間隔：**15 分鐘**
-   - 持續時間：**1 天**
-   - ☑️ 勾選「已啟用」
-   - 點擊「確定」
-
-5. **動作**
-   - 點擊「新增」
-   - 動作：啟動程式
-   - 程式或指令碼：`D:\CryptoHelper\run_scanner.bat`
-   - 點擊「確定」
-
-6. **條件**
-   - ☐ 取消勾選「只有在電腦使用 AC 電源時才啟動工作」
-   - ☐ 取消勾選「電腦改用電池電源時停止」
-
-7. **設定**
-   - ☑️ 勾選「如果工作失敗，依照下列設定重新啟動」
-   - 嘗試重新啟動：3 次
-   - 點擊「確定」完成
-
-#### 方法 B：使用 PowerShell（快速）
-
-複製以下指令到 PowerShell（**以系統管理員身分執行**）：
-
-```powershell
-$action = New-ScheduledTaskAction -Execute "D:\CryptoHelper\run_scanner.bat"
-$trigger = New-ScheduledTaskTrigger -Daily -At "00:00" -RepetitionInterval (New-TimeSpan -Minutes 15) -RepetitionDuration (New-TimeSpan -Days 1)
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
-$principal = New-ScheduledTaskPrincipal -UserId "$env:USERNAME" -RunLevel Highest
-
-Register-ScheduledTask -TaskName "CryptoHelper Scanner" -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description "每15分鐘掃描加密貨幣交易訊號"
-
-Write-Host "✅ 排程已建立！" -ForegroundColor Green
-Write-Host "Scanner 將從現在開始每 15 分鐘執行一次" -ForegroundColor Cyan
+[INFO] Crypto Scanner starting…
+[INFO] Enabled strategies: 6
+[INFO] ═══ Scan cycle started ═══
 ```
+
+### 運行中
+- 每 15 分鐘自動掃描
+- Log 即時顯示在視窗中
+- 有訊號時立即發送 Telegram 通知
+- 視窗標題顯示「運行中」提醒
+
+### 停止
+- 直接關閉視窗即可
+- 或按 `Ctrl+C` 優雅退出
 
 ---
 
-## ✅ 驗證
+## 💡 優點
 
-### 手動觸發測試
-1. 開啟工作排程器
-2. 找到「CryptoHelper Scanner」
-3. 右鍵點擊 → 「執行」
-4. 檢查是否收到 Telegram 通知（如果有訊號）
-
-### 查看執行歷史
-1. 工作排程器中選擇你的工作
-2. 下方「歷程記錄」標籤
-3. 可以看到每次執行的時間和結果
-
-### 查看錯誤 log
-```powershell
-cd D:\CryptoHelper
-Get-Content logs.txt -Tail 20
-```
+- ✅ **完全免費** - 不需雲端服務
+- ✅ **不會被封鎖** - 使用你的家用網路 IP
+- ✅ **即時可見** - Log 清楚顯示掃描狀態
+- ✅ **完全控制** - 要用才開，不用就關
+- ✅ **資料本地化** - `data/state.json` 儲存在本地
 
 ---
 
-## 🔧 管理
+## 🔧 進階設定
 
-### 暫停掃描
-```powershell
-Disable-ScheduledTask -TaskName "CryptoHelper Scanner"
+### 開機自動啟動（選用）
+
+如果想讓 Scanner 在電腦開機時自動啟動：
+
+1. 按 `Win+R`，輸入 `shell:startup`
+2. 在開啟的資料夾中建立 `start.bat` 的捷徑
+3. 下次開機時會自動啟動 Scanner
+
+### 修改掃描間隔
+
+編輯 `config.yaml`：
+```yaml
+scanner:
+  scan_interval_minutes: 30  # 改成 30 分鐘
 ```
 
-### 恢復掃描
-```powershell
-Enable-ScheduledTask -TaskName "CryptoHelper Scanner"
+### 查看歷史 Log
+
+程式會在 console 顯示 log，如果想記錄到檔案：
+```batch
+python -m src.main > logs.txt 2>&1
 ```
-
-### 刪除排程
-```powershell
-Unregister-ScheduledTask -TaskName "CryptoHelper Scanner" -Confirm:$false
-```
-
-### 修改間隔時間
-如果想改成 30 分鐘：
-1. 工作排程器 → 右鍵你的工作 → 內容
-2. 觸發程序 → 編輯
-3. 修改「重複工作間隔」
-4. 確定
-
----
-
-## 💡 注意事項
-
-### 電腦需要開機
-- Scanner 只在電腦開機時運作
-- 如果電腦關機，排程會跳過該時段
-- 開機後會自動恢復執行
-
-### 確保 Python 在 PATH 中
-測試：
-```powershell
-python --version
-```
-應該顯示 Python 版本
-
-### 網路連線
-- 確保電腦有網路連線
-- 如果使用 VPN，確保 VPN 穩定
-
----
-
-## 📊 預期行為
-
-- ✅ 每 15 分鐘自動掃描
-- ✅ 有訊號時發送 Telegram 通知
-- ✅ 狀態儲存在 `data/state.json`
-- ✅ 錯誤記錄在 `logs.txt`
-- ✅ 不會重複發送相同訊號（除非訊號強度提升）
 
 ---
 
 ## 🆘 故障排除
 
-### 排程沒執行？
-1. 檢查工作排程器中的「上次執行結果」
-2. 確認「下次執行時間」是否正確
-3. 檢查 `logs.txt` 是否有錯誤
-
-### 沒收到通知？
-1. 手動執行測試：`python -m src.main --single-run`
-2. 檢查 `config.yaml` 中的 Telegram 設定
-3. 確認當前市場有符合條件的訊號
+### 雙擊 start.bat 視窗閃退？
+1. 用 PowerShell 測試：
+   ```powershell
+   cd D:\CryptoHelper
+   python -m src.main
+   ```
+2. 查看錯誤訊息
 
 ### Python 找不到？
-在 `run_scanner.bat` 中使用完整路徑：
-```batch
-C:\Python313\python.exe -m src.main --single-run
+- 確認 Python 已加入 PATH：
+  ```powershell
+  python --version
+  ```
+- 或修改 `start.bat`，使用完整路徑：
+  ```batch
+  C:\Python313\python.exe -m src.main
+  ```
+
+### 沒收到 Telegram 通知？
+1. 檢查 `config.yaml` 中的設定
+2. 手動測試一次掃描，查看 log
+3. 確認當前市場有符合條件的訊號
+
+### 想在背景隱藏視窗運行？
+建立 VBS 腳本 `start_hidden.vbs`：
+```vbscript
+CreateObject("Wscript.Shell").Run "D:\CryptoHelper\start.bat", 0, False
 ```
+雙擊 VBS 就會在背景執行（無視窗）
+
+---
+
+## 📊 預期行為
+
+- ✅ 啟動後立即執行一次掃描
+- ✅ 之後每 15 分鐘自動掃描
+- ✅ 有新訊號時發送 Telegram 通知
+- ✅ 狀態儲存在 `data/state.json`
+- ✅ 不會重複發送相同訊號（cooldown 機制）
+
+---
+
+## ⚙️ 系統需求
+
+- **作業系統**: Windows 10/11
+- **Python**: 3.10+
+- **網路**: 需要連線到 Binance API 和 Telegram
+- **電腦狀態**: Scanner 僅在電腦開機且程式運行時工作
+
+---
+
+*最後更新: 2026-04-08*
+*部署方式: 本地持續運行（取代 Windows 排程）*
+
