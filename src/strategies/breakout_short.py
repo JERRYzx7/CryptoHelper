@@ -96,12 +96,18 @@ class BearishBreakoutStrategy(BaseStrategy):
                 score += obv_weight
                 details.append("OBV 下降（突破有量）")
 
-        # Key levels (breakdown: measured move target)
+        # Key levels (breakdown: measured move downward)
+        cur_close = float(cur.get("close") or 0)
         key_levels: dict = {}
-        if is_consolidated and consol_low > 0:
+        if is_consolidated and consol_high > 0:
             range_size = consol_high - consol_low
+            # Entry: current close
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: above consolidation high
             key_levels["stop"] = round(consol_high, 6)
-            key_levels["resistance"] = round(consol_low, 6)  # old support → new resistance
+            # Resistance: old support becomes new resistance
+            key_levels["resistance"] = round(consol_low, 6)
+            # Target: measured move down
             key_levels["target"] = round(consol_low - range_size, 6)
 
         return StrategyResult(self.name, score, max_score, details, direction="short", key_levels=key_levels)

@@ -124,12 +124,18 @@ class BearishDivergenceStrategy(BaseStrategy):
                 details.append("OBV 下降（量能背離）")
 
         # Key levels
+        cur_close = float(cur.get("close") or 0)
         cur_high = float(cur.get("high") or 0)
         atr = float(cur.get("atr") or 0)
         key_levels: dict = {}
         if cur_high > 0:
+            # Entry: current close
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: slightly above swing high (0.5 ATR buffer)
             key_levels["stop"] = round(cur_high + 0.5 * atr, 6)
+            # Resistance: swing high level
             key_levels["resistance"] = round(cur_high, 6)
+            # Target: recent swing low
             key_levels["target"] = round(float(recent["low"].min()), 6)
 
         return StrategyResult(self.name, score, max_score, details, direction="short", key_levels=key_levels)

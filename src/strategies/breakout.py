@@ -99,11 +99,17 @@ class BreakoutStrategy(BaseStrategy):
                 details.append("OBV 上升（突破有量）")
 
         # Key levels (breakout: measured move target)
+        cur_close = float(cur.get("close") or 0)
         key_levels: dict = {}
         if is_consolidated and consol_low > 0:
             range_size = consol_high - consol_low
+            # Entry: current close (just broke out)
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: below consolidation low
             key_levels["stop"] = round(consol_low, 6)
-            key_levels["support"] = round(consol_high, 6)   # old resistance → new support
+            # Support: old resistance becomes new support
+            key_levels["support"] = round(consol_high, 6)
+            # Target: measured move (range height projected up)
             key_levels["target"] = round(consol_high + range_size, 6)
 
         return StrategyResult(self.name, score, max_score, details, direction="long", key_levels=key_levels)

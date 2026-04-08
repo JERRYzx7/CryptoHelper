@@ -134,12 +134,18 @@ class DivergenceStrategy(BaseStrategy):
                 details.append("OBV 上升（量能背離）")
 
         # Key levels
+        cur_close = float(cur.get("close") or 0)
         cur_low = float(cur.get("low") or 0)
         atr = float(cur.get("atr") or 0)
         key_levels: dict = {}
         if cur_low > 0:
+            # Entry: current close
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: slightly below swing low (0.5 ATR buffer)
             key_levels["stop"] = round(cur_low - 0.5 * atr, 6)
+            # Support: swing low level
             key_levels["support"] = round(cur_low, 6)
+            # Target: recent swing high
             key_levels["target"] = round(float(recent["high"].max()), 6)
 
         return StrategyResult(self.name, score, max_score, details, direction="long", key_levels=key_levels)

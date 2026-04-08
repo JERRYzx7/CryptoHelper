@@ -89,14 +89,18 @@ class BearishTrendStrategy(BaseStrategy):
                 score += obv_weight
                 details.append("OBV 下降（量能確認）")
 
-        # Key levels
+        # Key levels (for short: stop above, target below)
         cur_close = float(cur.get("close") or 0)
         ema_s = float(cur.get("ema_slow") or 0)
         atr = float(cur.get("atr") or 0)
         key_levels: dict = {}
         if cur_close > 0 and atr > 0:
+            # Entry: current close
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: above slow EMA or 1.5 ATR above entry
             stop = ema_s if ema_s > 0 else round(cur_close + 1.5 * atr, 6)
             key_levels["stop"] = round(stop, 6)
+            # Target: 3 ATR below entry
             key_levels["target"] = round(cur_close - 3 * atr, 6)
         if ema_s > 0:
             key_levels["resistance"] = round(ema_s, 6)

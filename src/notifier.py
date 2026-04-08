@@ -149,11 +149,27 @@ def format_aggregated_signal(
             break
 
     if key_levels:
-        lines.append("【關鍵價位】")
+        lines.append("【建議價位】")
+        if "entry" in key_levels:
+            lines.append(f"  💰 入場：${_fmt_price(key_levels['entry'])}")
         if "stop" in key_levels:
-            lines.append(f"  止損：${_fmt_price(key_levels['stop'])}")
+            lines.append(f"  🛑 止損：${_fmt_price(key_levels['stop'])}")
         if "target" in key_levels:
-            lines.append(f"  目標：${_fmt_price(key_levels['target'])}")
+            lines.append(f"  🎯 目標：${_fmt_price(key_levels['target'])}")
+        
+        # Calculate risk-reward ratio if entry and stop exist
+        if "entry" in key_levels and "stop" in key_levels and "target" in key_levels:
+            entry_price = key_levels["entry"]
+            stop_price = key_levels["stop"]
+            target_price = key_levels["target"]
+            risk = abs(entry_price - stop_price)
+            reward = abs(target_price - entry_price)
+            if risk > 0:
+                rr_ratio = reward / risk
+                lines.append(f"  📊 風報比：1:{rr_ratio:.1f}")
+        
+        lines.append("")
+        lines.append("【關鍵價位】")
         if "support" in key_levels:
             lines.append(f"  支撐：${_fmt_price(key_levels['support'])}")
         if "resistance" in key_levels:

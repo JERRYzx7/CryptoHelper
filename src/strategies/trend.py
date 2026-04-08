@@ -97,8 +97,12 @@ class TrendStrategy(BaseStrategy):
         atr = float(cur.get("atr") or 0)
         key_levels: dict = {}
         if cur_close > 0 and atr > 0:
+            # Entry: current close or slightly better (pullback entry)
+            key_levels["entry"] = round(cur_close, 6)
+            # Stop: below slow EMA or 1.5 ATR below entry
             stop = ema_s if ema_s > 0 else round(cur_close - 1.5 * atr, 6)
             key_levels["stop"] = round(stop, 6)
+            # Target: 3 ATR above entry (1:2 risk-reward)
             key_levels["target"] = round(cur_close + 3 * atr, 6)
         if ema_s > 0:
             key_levels["support"] = round(ema_s, 6)
