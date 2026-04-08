@@ -83,6 +83,22 @@ class BearishDivergenceStrategy(BaseStrategy):
                         f"前高 {recent['rsi'].iloc[prev_swing_idx]:.1f}"
                     )
 
+            # 2b. Stochastic RSI divergence (more sensitive)
+            stoch_div_weight = getattr(w, "stoch_rsi_divergence", 0)
+            if "stoch_rsi_k" in recent.columns and pd.notna(cur.get("stoch_rsi_k")):
+                if prior_swings and price_is_new_high:
+                    prev_swing_idx = prior_swings[-1]
+                    # Bearish divergence: price higher, stoch RSI lower
+                    if (
+                        pd.notna(recent["stoch_rsi_k"].iloc[prev_swing_idx])
+                        and recent["stoch_rsi_k"].iloc[cur_idx] < recent["stoch_rsi_k"].iloc[prev_swing_idx]
+                    ):
+                        score += stoch_div_weight
+                        details.append(
+                            f"Stoch RSI 背離：{recent['stoch_rsi_k'].iloc[cur_idx]:.1f} < "
+                            f"前高 {recent['stoch_rsi_k'].iloc[prev_swing_idx]:.1f}"
+                        )
+
         # ── 3. Volume expanding (chasing tops) ──────────────────────────
         vol_weight = getattr(w, "volume_decline", 0)
         if "volume_ma" in recent.columns and len(recent) >= 15:
@@ -98,6 +114,14 @@ class BearishDivergenceStrategy(BaseStrategy):
         if pd.notna(cur.get("rsi")) and cur["rsi"] > self._cfg.rsi_overbought:
             score += overbought_weight
             details.append(f"RSI {cur['rsi']:.1f} > {self._cfg.rsi_overbought}（超買）")
+
+        # ── 5. OBV confirmation (look for OBV divergence too) ────────────
+        obv_weight = getattr(w, "obv_confirm", 0)
+        if "obv" in recent.columns and len(recent) >= 5:
+            recent_obv_trend = recent["obv"].iloc[-1] - recent["obv"].iloc[-5]
+            if recent_obv_trend < 0:  # OBV falling while price rising = bearish
+                score += obv_weight
+                details.append("OBV 下降（量能背離）")
 
         # Key levels
         cur_high = float(cur.get("high") or 0)

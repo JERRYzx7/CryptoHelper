@@ -24,11 +24,14 @@ strategies:
     rsi_threshold: 50
     volume_multiplier: 1.5
     score_threshold: 6
+    adx_threshold: 25
     weights:
       ema_cross: 3
       macd_cross: 2
       rsi_above: 1
       volume_surge: 2
+      adx_strong: 1
+      obv_confirm: 1
 
   divergence:
     enabled: true
@@ -39,11 +42,15 @@ strategies:
     rsi_overbought: 60
     swing_window: 5
     score_threshold: 6
+    stoch_rsi_oversold: 20
+    stoch_rsi_overbought: 80
     weights:
       price_new_low: 2
       rsi_divergence: 3
       volume_decline: 1
       oversold: 2
+      stoch_rsi_divergence: 2
+      obv_confirm: 1
 
   breakout:
     enabled: true
@@ -58,6 +65,8 @@ strategies:
       breakout: 3
       volume_surge: 3
       atr_expansion: 1
+      bb_breakout: 2
+      obv_confirm: 1
 
 btc_filter:
   enabled: true 

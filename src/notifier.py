@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import logging
+from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from telegram import Bot
@@ -17,6 +18,13 @@ logger = logging.getLogger(__name__)
 # TradingView link template
 _TV_URL = "https://www.tradingview.com/chart/?symbol=BINANCE:{symbol}.P"
 
+# Known indicator keywords for signal strength calculation
+_INDICATOR_KEYWORDS = [
+    "EMA", "SMA", "MACD", "RSI", "ADX", "OBV", "VWAP",
+    "布林", "Bollinger", "成交量", "Volume", "量能",
+    "ATR", "Stochastic", "KD", "CCI", "MFI",
+]
+
 
 def _fmt_price(v: float) -> str:
     """Format a price value with appropriate decimal places."""
@@ -28,7 +36,136 @@ def _fmt_price(v: float) -> str:
         return f"{v:.6f}"
 
 
+def _count_unique_indicators(details: list[str]) -> int:
+    """Count unique indicator confirmations from detail strings."""
+    found = set()
+    for detail in details:
+        detail_upper = detail.upper()
+        for kw in _INDICATOR_KEYWORDS:
+            if kw.upper() in detail_upper:
+                found.add(kw.upper())
+    return len(found) if found else len(details)
+
+
+def _get_signal_strength(indicator_count: int) -> str:
+    """Get signal strength label based on indicator count."""
+    if indicator_count >= 4:
+        return f"🔥 強（{indicator_count} 指標共識）"
+    elif indicator_count >= 2:
+        return f"⚡ 中等（{indicator_count} 指標共識）"
+    else:
+        return f"⚠️ 弱（{indicator_count} 指標共識）"
+
+
+def _deduplicate_details(details: list[str]) -> list[str]:
+    """Deduplicate similar detail entries while preserving order."""
+    seen = set()
+    result = []
+    for d in details:
+        normalized = d.strip().lower()
+        if normalized not in seen:
+            seen.add(normalized)
+            result.append(d)
+    return result
+
+
 # ── Pure formatting functions (testable without network) ───────────────────────
+
+
+def format_aggregated_signal(
+    symbol: str,
+    results: list["StrategyResult"],
+) -> str:
+    """Format aggregated signal for a symbol with direction and strength.
+
+    Parameters
+    ----------
+    symbol:
+        Trading pair symbol (e.g., "SOLUSDT").
+    results:
+        All triggered strategies for this symbol.
+
+    Returns
+    -------
+    Formatted message string with direction, strength, and details.
+    """
+    lines: list[str] = []
+
+    # Header
+    lines.append(f"📊 <b>{symbol}</b> ══════════════")
+    lines.append("")
+
+    # Determine direction based on strategy names
+    long_strategies = []
+    short_strategies = []
+    for r in results:
+        if "(空)" in r.strategy_name or r.direction == "short":
+            short_strategies.append(r)
+        else:
+            long_strategies.append(r)
+
+    if long_strategies and not short_strategies:
+        direction_line = "🟢 建議：做多"
+    elif short_strategies and not long_strategies:
+        direction_line = "🔴 建議：做空"
+    else:
+        direction_line = "⚪ 觀望（多空分歧）"
+
+    lines.append(direction_line)
+
+    # Aggregate all details and calculate signal strength
+    all_details: list[str] = []
+    for r in results:
+        all_details.extend(r.details)
+    unique_details = _deduplicate_details(all_details)
+    indicator_count = _count_unique_indicators(unique_details)
+    strength_line = f"📈 信號強度：{_get_signal_strength(indicator_count)}"
+    lines.append(strength_line)
+    lines.append("")
+
+    # Triggered strategies section
+    lines.append("【觸發策略】")
+    for r in results:
+        lines.append(f"• {html.escape(r.strategy_name)} {r.score}/{r.max_score}")
+    lines.append("")
+
+    # Signal details section (long or short based on majority)
+    if long_strategies and not short_strategies:
+        lines.append("【多頭訊號】")
+    elif short_strategies and not long_strategies:
+        lines.append("【空頭訊號】")
+    else:
+        lines.append("【訊號詳情】")
+
+    for detail in unique_details:
+        lines.append(f"  ✓ {html.escape(detail)}")
+    lines.append("")
+
+    # Key levels from first result that has them
+    key_levels = None
+    for r in results:
+        if r.key_levels:
+            key_levels = r.key_levels
+            break
+
+    if key_levels:
+        lines.append("【關鍵價位】")
+        if "stop" in key_levels:
+            lines.append(f"  止損：${_fmt_price(key_levels['stop'])}")
+        if "target" in key_levels:
+            lines.append(f"  目標：${_fmt_price(key_levels['target'])}")
+        if "support" in key_levels:
+            lines.append(f"  支撐：${_fmt_price(key_levels['support'])}")
+        if "resistance" in key_levels:
+            lines.append(f"  壓力：${_fmt_price(key_levels['resistance'])}")
+        lines.append("")
+
+    # TradingView link
+    tv_url = _TV_URL.format(symbol=symbol)
+    lines.append(f'<a href="{tv_url}">📈 TradingView</a>')
+    lines.append("══════════════════════════")
+
+    return "\n".join(lines)
 
 def format_scan_report(
     invalidated: list[dict],
@@ -163,13 +300,30 @@ class TelegramNotifier:
         still_valid: list[dict],
         new_discoveries: list[tuple[str, "StrategyResult"]],
     ) -> None:
-        """Send the three-section scan event notification."""
+        """Send scan event notifications with new aggregated format for discoveries.
+
+        For new discoveries, groups by symbol and sends individual messages
+        using the new aggregated signal format with direction recommendations
+        and signal strength.
+        """
         if not self._bot:
             logger.warning("Telegram bot not configured, skipping scan report")
             return
-        text = format_scan_report(invalidated, still_valid, new_discoveries)
-        if text:
-            await self._send(text)
+
+        # Send status sections (invalidated + still valid) if any
+        status_text = format_scan_report(invalidated, still_valid, [])
+        if status_text:
+            await self._send(status_text)
+
+        # Group new discoveries by symbol and send aggregated messages
+        if new_discoveries:
+            grouped: dict[str, list["StrategyResult"]] = defaultdict(list)
+            for symbol, result in new_discoveries:
+                grouped[symbol].append(result)
+
+            for symbol, results in grouped.items():
+                aggregated_text = format_aggregated_signal(symbol, results)
+                await self._send(aggregated_text)
 
     async def send_status_report(
         self,
@@ -182,6 +336,13 @@ class TelegramNotifier:
         if not self._bot:
             return
         text = format_status_report(hour, new_count, invalidated_count, active_signals)
+        await self._send(text)
+
+    async def send_startup_message(self) -> None:
+        """Send a welcome/startup message."""
+        if not self._bot:
+            return
+        text = "🚀 <b>Scanner Started</b>\n掃描器已成功啟動並開始監控市場！"
         await self._send(text)
 
     async def send_signal(

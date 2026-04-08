@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import sys
@@ -187,7 +188,22 @@ async def run_scan(
 
 # ── Entry Point ────────────────────────────────────────────────────────────────
 
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Crypto Scanner — monitors markets for trading signals",
+    )
+    parser.add_argument(
+        "--single-run",
+        action="store_true",
+        help="Run one scan cycle and exit (for GitHub Actions / CI usage)",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+
     config = load_config()
     _setup_logging(config.logging.level)
 
@@ -200,8 +216,22 @@ def main() -> None:
     # Shared activity counter — tracks events since last status report
     activity: dict = {"new": 0, "invalidated": 0}
 
+    if args.single_run:
+        # Single-run mode: one scan cycle, then exit
+        async def _run_single() -> None:
+            async with BinanceFetcher(config.exchange) as fetcher:
+                await run_scan(config, fetcher, strategies, state, notifier, activity)
+            logger.info("Single-run scan completed.")
+
+        asyncio.run(_run_single())
+        sys.exit(0)
+
+    # Default mode: continuous scheduler
     async def _run() -> None:
         async with BinanceFetcher(config.exchange) as fetcher:
+            # Send startup message
+            await notifier.send_startup_message()
+
             # Run one scan immediately on startup
             await run_scan(config, fetcher, strategies, state, notifier, activity)
 

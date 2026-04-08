@@ -1,0 +1,12 @@
+2026-03-01 14:24:58 [INFO] crypto_scanner: Crypto Scanner starting窶ｦ
+2026-03-01 14:24:58 [INFO] crypto_scanner: Enabled strategies: ['雜ｨ蜍｢蝠溷虚蝙・, '雜ｨ蜍｢蝠溷虚蝙・遨ｺ)', '閭碁屬蜿崎ｽ牙梛', '閭碁屬蜿崎ｽ牙梛(遨ｺ)', '辷・㍼遯∫ｴ蝙・, '辷・㍼遯∫ｴ蝙・遨ｺ)']
+2026-03-01 14:24:58 [INFO] crypto_scanner: 笊絶武笊・Scan cycle started 笊絶武笊・2026-03-01 14:24:59 [INFO] src.data.market_filter: Market filter: 98 symbols passed (from 542 total)
+2026-03-01 14:24:59 [INFO] crypto_scanner: Fetching 4h klines for 98 symbols窶ｦ
+2026-03-01 14:25:00 [INFO] crypto_scanner: Fetching 1h klines for 98 symbols窶ｦ
+2026-03-01 14:25:03 [INFO] crypto_scanner: 笊絶武笊・Scan cycle finished 笊絶武笊・2026-03-01 14:25:03 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-01 14:25:03 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-03-01 14:25:03 [INFO] src.scheduler: Scheduler configured: scan at :00/:15/:30/:45, status at 0,4,8,12,16,20 TST
+2026-03-01 14:25:03 [INFO] apscheduler.scheduler: Added job "Market Scan" to job store "default"
+2026-03-01 14:25:03 [INFO] apscheduler.scheduler: Added job "Status Report" to job store "default"
+2026-03-01 14:25:03 [INFO] apscheduler.scheduler: Scheduler started
+2026-03-01 14:25:03 [INFO] crypto_scanner: Scanner running. Press Ctrl+C to stop.

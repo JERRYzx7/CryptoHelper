@@ -55,6 +55,7 @@ class TrendConfig(BaseModel):
     rsi_threshold: float = 50
     volume_multiplier: float = 1.5
     score_threshold: int = 6
+    adx_threshold: float = 25
     weights: StrategyWeights = Field(default_factory=StrategyWeights)
 
 
@@ -67,6 +68,8 @@ class DivergenceConfig(BaseModel):
     rsi_overbought: float = 60
     swing_window: int = 5
     score_threshold: int = 6
+    stoch_rsi_oversold: float = 20
+    stoch_rsi_overbought: float = 80
     weights: StrategyWeights = Field(default_factory=StrategyWeights)
 
 

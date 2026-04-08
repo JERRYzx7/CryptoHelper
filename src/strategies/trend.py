@@ -78,6 +78,19 @@ class TrendStrategy(BaseStrategy):
                 score += vol_weight
                 details.append(f"Volume {ratio:.1f}x（>{self._cfg.volume_multiplier}x）")
 
+        # 5. ADX strong trend
+        adx_weight = getattr(w, "adx_strong", 0)
+        if pd.notna(cur.get("adx")) and cur["adx"] > self._cfg.adx_threshold:
+            score += adx_weight
+            details.append(f"ADX {cur['adx']:.1f} > {self._cfg.adx_threshold}（強趨勢）")
+
+        # 6. OBV confirmation (rising OBV confirms uptrend)
+        obv_weight = getattr(w, "obv_confirm", 0)
+        if pd.notna(cur.get("obv")) and pd.notna(prev.get("obv")):
+            if cur["obv"] > prev["obv"]:
+                score += obv_weight
+                details.append("OBV 上升（量能確認）")
+
         # Key levels
         cur_close = float(cur.get("close") or 0)
         ema_s = float(cur.get("ema_slow") or 0)

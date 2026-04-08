@@ -73,12 +73,11 @@ class DivergenceStrategy(BaseStrategy):
         # ── 2. RSI bullish divergence ────────────────────────────────────
         rsi_div_weight = getattr(w, "rsi_divergence", 0)
         swing_window = self._cfg.swing_window
+        swing_lows = _find_swing_lows(recent["low"], swing_window)
+        prior_swings = [i for i in swing_lows if i < cur_idx - swing_window]
 
         if "rsi" in recent.columns and pd.notna(cur.get("rsi")):
-            swing_lows = _find_swing_lows(recent["low"], swing_window)
-
             # We need at least one *prior* swing low to compare against
-            prior_swings = [i for i in swing_lows if i < cur_idx - swing_window]
             if prior_swings and price_is_new_low:
                 prev_swing_idx = prior_swings[-1]
                 # Bullish divergence: price lower low, RSI higher low
@@ -92,6 +91,22 @@ class DivergenceStrategy(BaseStrategy):
                         f"RSI 背離：價格新低但 RSI "
                         f"{recent['rsi'].iloc[cur_idx]:.1f} > "
                         f"前低 {recent['rsi'].iloc[prev_swing_idx]:.1f}"
+                    )
+
+        # ── 2b. Stochastic RSI divergence (more sensitive) ───────────────
+        stoch_div_weight = getattr(w, "stoch_rsi_divergence", 0)
+        if "stoch_rsi_k" in recent.columns and pd.notna(cur.get("stoch_rsi_k")):
+            if prior_swings and price_is_new_low:
+                prev_swing_idx = prior_swings[-1]
+                # Bullish divergence: price lower, stoch RSI higher
+                if (
+                    pd.notna(recent["stoch_rsi_k"].iloc[prev_swing_idx])
+                    and recent["stoch_rsi_k"].iloc[cur_idx] > recent["stoch_rsi_k"].iloc[prev_swing_idx]
+                ):
+                    score += stoch_div_weight
+                    details.append(
+                        f"Stoch RSI 背離：{recent['stoch_rsi_k'].iloc[cur_idx]:.1f} > "
+                        f"前低 {recent['stoch_rsi_k'].iloc[prev_swing_idx]:.1f}"
                     )
 
         # ── 3. Volume declining ──────────────────────────────────────────
@@ -109,6 +124,14 @@ class DivergenceStrategy(BaseStrategy):
         if pd.notna(cur.get("rsi")) and cur["rsi"] < self._cfg.rsi_oversold:
             score += oversold_weight
             details.append(f"RSI {cur['rsi']:.1f} < {self._cfg.rsi_oversold}（超賣）")
+
+        # ── 5. OBV confirmation (look for OBV divergence too) ────────────
+        obv_weight = getattr(w, "obv_confirm", 0)
+        if "obv" in recent.columns and len(recent) >= 5:
+            recent_obv_trend = recent["obv"].iloc[-1] - recent["obv"].iloc[-5]
+            if recent_obv_trend > 0:  # OBV rising while price falling = bullish
+                score += obv_weight
+                details.append("OBV 上升（量能背離）")
 
         # Key levels
         cur_low = float(cur.get("low") or 0)

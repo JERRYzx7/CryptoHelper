@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.notifier import format_scan_report, format_status_report
+from src.notifier import format_scan_report, format_status_report, format_aggregated_signal
 from src.strategies.base import StrategyResult
 
 
@@ -182,3 +182,91 @@ class TestDirectionAndKeyLevelsInNotification:
         msg = format_scan_report([], [], [("XRPUSDT", r)])
         assert "&lt;" in msg  # < escaped
         assert "<40" not in msg  # raw < not present in HTML
+
+
+# ── format_aggregated_signal ──────────────────────────────────────────────────
+
+class TestFormatAggregatedSignal:
+    def test_symbol_in_header(self):
+        r = _result("趨勢啟動型", 8, 10, ["EMA 黃金交叉"])
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "SOLUSDT" in msg
+
+    def test_long_direction_recommendation(self):
+        r = _result("趨勢啟動型", 8, 10, ["EMA 黃金交叉"], direction="long")
+        msg = format_aggregated_signal("BTCUSDT", [r])
+        assert "🟢 建議：做多" in msg
+        assert "【多頭訊號】" in msg
+
+    def test_short_direction_recommendation(self):
+        r = _result("趨勢啟動型(空)", 8, 10, ["EMA 死亡交叉"], direction="short")
+        msg = format_aggregated_signal("BTCUSDT", [r])
+        assert "🔴 建議：做空" in msg
+        assert "【空頭訊號】" in msg
+
+    def test_mixed_direction_shows_neutral(self):
+        r1 = _result("趨勢啟動型", 8, 10, ["EMA 黃金交叉"], direction="long")
+        r2 = _result("背離反轉型(空)", 7, 10, ["RSI 超買"], direction="short")
+        msg = format_aggregated_signal("BTCUSDT", [r1, r2])
+        assert "⚪ 觀望（多空分歧）" in msg
+        assert "【訊號詳情】" in msg
+
+    def test_signal_strength_strong(self):
+        details = ["EMA 黃金交叉", "MACD 金叉", "ADX 35（強趨勢）", "OBV 上升"]
+        r = _result("趨勢啟動型", 8, 10, details)
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "🔥 強" in msg
+
+    def test_signal_strength_medium(self):
+        details = ["EMA 黃金交叉", "MACD 金叉"]
+        r = _result("趨勢啟動型", 8, 10, details)
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "⚡ 中等" in msg
+
+    def test_signal_strength_weak(self):
+        details = ["RSI 上升"]
+        r = _result("趨勢啟動型", 8, 10, details)
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "⚠️ 弱" in msg
+
+    def test_triggered_strategies_section(self):
+        r1 = _result("趨勢啟動型", 8, 10, ["EMA Cross"])
+        r2 = _result("爆量突破型", 7, 11, ["Volume surge"])
+        msg = format_aggregated_signal("SOLUSDT", [r1, r2])
+        assert "【觸發策略】" in msg
+        assert "趨勢啟動型 8/10" in msg
+        assert "爆量突破型 7/11" in msg
+
+    def test_details_deduplicated(self):
+        r1 = _result("趨勢啟動型", 8, 10, ["EMA 黃金交叉", "MACD 金叉"])
+        r2 = _result("爆量突破型", 7, 11, ["EMA 黃金交叉", "Volume 放大"])
+        msg = format_aggregated_signal("SOLUSDT", [r1, r2])
+        # Count occurrences - should appear only once
+        assert msg.count("EMA 黃金交叉") == 1
+
+    def test_key_levels_shown(self):
+        r = _result("趨勢啟動型", 8, 10, [],
+                    key_levels={"stop": 142.50, "target": 168.00})
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "【關鍵價位】" in msg
+        assert "止損" in msg
+        assert "目標" in msg
+        assert "142" in msg
+        assert "168" in msg
+
+    def test_tradingview_link_present(self):
+        r = _result("趨勢啟動型", 8, 10, [])
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "tradingview.com" in msg.lower()
+        assert "SOLUSDT" in msg
+
+    def test_html_escape_in_strategy_name(self):
+        r = _result("策略<test>", 8, 10, [])
+        msg = format_aggregated_signal("BTCUSDT", [r])
+        assert "&lt;test&gt;" in msg
+
+    def test_header_and_footer_decorators(self):
+        r = _result("趨勢啟動型", 8, 10, [])
+        msg = format_aggregated_signal("SOLUSDT", [r])
+        assert "══════════════" in msg  # Header decorator
+        assert msg.endswith("══════════════════════════")  # Footer decorator

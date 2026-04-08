@@ -83,6 +83,21 @@ class BreakoutStrategy(BaseStrategy):
                     f"ATR 擴張 {cur['atr']:.4f} > MA {atr_ma:.4f}"
                 )
 
+        # ── 5. Bollinger Bands breakout (price above upper band) ─────────
+        bb_weight = getattr(w, "bb_breakout", 0)
+        if pd.notna(cur.get("close")) and pd.notna(cur.get("bb_upper")):
+            if cur["close"] > cur["bb_upper"]:
+                score += bb_weight
+                details.append(f"突破 BB 上軌 {cur['bb_upper']:.4f}")
+
+        # ── 6. OBV confirmation (rising OBV on breakout) ─────────────────
+        obv_weight = getattr(w, "obv_confirm", 0)
+        if pd.notna(cur.get("obv")) and len(df) >= 5:
+            obv_trend = df["obv"].iloc[-1] - df["obv"].iloc[-5]
+            if obv_trend > 0:
+                score += obv_weight
+                details.append("OBV 上升（突破有量）")
+
         # Key levels (breakout: measured move target)
         key_levels: dict = {}
         if is_consolidated and consol_low > 0:

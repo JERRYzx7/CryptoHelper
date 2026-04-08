@@ -3,8 +3,10 @@ __pycache__/
 *.pyc
 .venv/
 logs/
-state.json
 *.egg-info/
 dist/
 build/
 .pytest_cache/
+
+# Track data/state.json for GitHub Actions workflow
+# (removed state.json from ignore list)
